@@ -1,0 +1,75 @@
+@using Mif.MMP.Dto
+@{
+    ViewBag.Title = "WorkGroupByStIndex";
+    Layout = "~/Views/Shared/_Content_B.cshtml";
+
+    List<ProjectGroupWorkloadDto> pgList = (List<ProjectGroupWorkloadDto>)ViewData["_projectGroupList"];
+}    
+<form class="form-horizontal" role="form" id="form11">
+
+    @Html.Hidden("txtProjectId", ViewData["_ProjectId"])
+    @Html.Hidden("txtProjectMediaId", ViewData["_ProjectMediaId"])
+    <div class="col-sm-12">
+
+        @foreach (var item in (List<Mif.BP.Dto.KeyValItemDto>)ViewData["_projectGroupKV"])
+        {
+            string checkStr = "";
+            <div class="col-sm-6">
+                @if (pgList.Any(a => a.ProjectKey == item.ItemValue))
+                {
+                    checkStr = "checked";
+                }
+                <input type="checkbox" name="chGroup"  value="@item.ItemValue" @checkStr />@Html.Raw(item.ItemText)
+            </div>
+        }
+    </div>
+</form>
+    <div id="footer" style="height: 40px; padding: 5px; text-align: right;">  
+        @if (ViewData["_ProjectId"] != null && !string.IsNullOrEmpty(ViewData["_ProjectId"].ToString()))
+        {
+          <button id = "form-submit" onclick = "onSum()" class="btn btn-primary btn-md ladda-button glyphicon glyphicon-save" data-style="expand-right" data-size="l"><span class="ladda-label">确定</span></button>    
+
+        }<button class="btn btn-white btn-md" type="button" onclick="art.artDialog.close();">关闭</button>
+    </div>
+
+<script type="text/javascript">
+    function onSum() {
+        var chGroupStr = $("input[name='chGroup']:checked").map(function () {
+            return $(this).val();
+        }).get().join(',');
+        if (chGroupStr.indexOf("1,2,3,4,5") == -1) { 
+            toastr.error("      城市	监测地点	监测结果	是否提供视频	区属 是必选属性");
+            return false;
+
+        }
+            var l = Ladda.create(document.querySelector('#form-submit'));
+               l.start();
+            var url = '@Url.Content("~/Project/ProjectOther/AjaxWorkGroupByStIndex")' + '?rnd=' + Math.random();
+        $.ajax({
+                cache: true,
+            type: "POST",
+            url: url,
+            data: $("#form11").serialize(),
+            dataType: "json",
+            beforeSend: function () {
+                // 禁用按钮防止重复提交，发送前响应
+                $("#form-submit").attr({ disabled: "disabled" });
+                },
+            success: function (data) {
+                    if (data.ExeResult) {
+                        toastr.success("保存成功！" + data.Message);
+                    } else {
+                        toastr.error("保存失败" + data.Message);
+                    }
+                },
+            complete: function () {//完成响应
+                    l.stop();
+                    //   art.artDialog.close()
+                },
+            error: function (data) {
+                    toastr.error("保存失败！");
+                }
+            });
+        }
+
+</script>
